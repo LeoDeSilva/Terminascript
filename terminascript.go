@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"termina/lexer"
+	"terminascript/lexer"
 )
 
 func ReadFile(filename string) string {

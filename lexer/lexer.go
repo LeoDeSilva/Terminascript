@@ -15,14 +15,12 @@ func NewLexer(program string) *Lexer {
 
 func (l *Lexer) Lex() []Token {
 	var tokens []Token
-
 	for l.ch != 0 {
 		tok := l.NextToken()
 		tokens = append(tokens, tok)
 	}
 
 	tokens = append(tokens, Token{Type: EOF, Literal: ""})
-
 	return tokens
 }
 
@@ -32,6 +30,7 @@ func (l *Lexer) readChar() {
 	} else {
 		l.ch = l.program[l.readPosition]
 	}
+
 	l.position = l.readPosition
 	l.readPosition++
 }
@@ -78,6 +77,9 @@ func (l *Lexer) NextToken() Token {
 		tok = l.readDouble(LT, '=', LTE)
 	case '!':
 		tok = l.readDouble(NOT, '=', NE)
+	case '"':
+		tok.Literal = l.readString()
+		tok.Type = STRING
 	case 0:
 		tok = NewToken(EOF, l.ch)
 	default:
