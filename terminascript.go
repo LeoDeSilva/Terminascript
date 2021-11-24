@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"terminascript/lexer"
+	"terminascript/parser"
 )
 
 func ReadFile(filename string) string {
@@ -36,7 +37,10 @@ func interpretProgram(program string) {
 	fmt.Println(program)
 	l := lexer.NewLexer(strings.TrimSpace(program))
 	tokens := l.Lex()
-	fmt.Println(tokens)
+
+	p := parser.NewParser(tokens)
+	ast := p.Parse()
+	fmt.Println(ast)
 }
 
 func main() {

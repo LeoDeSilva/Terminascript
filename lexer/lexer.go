@@ -67,6 +67,8 @@ func (l *Lexer) NextToken() Token {
 		tok = NewToken(QUESTION, l.ch)
 	case ';':
 		tok = NewToken(SEMICOLON, l.ch)
+	case ',':
+		tok = NewToken(COMMA, l.ch)
 	case ':':
 		tok = l.readDouble(COLON, '=', ASSIGN)
 	case '=':
