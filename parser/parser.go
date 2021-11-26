@@ -64,17 +64,24 @@ func (p *Parser) ParseArith() interface{} {
 	leftNode := p.ParseTerm()
 	if p.token.Type != lexer.SEMICOLON && p.token.Type != lexer.EOF {
 		var opNode BinaryOperationNode
-
-		if p.token.Type == lexer.ADD {
+		switch p.token.Type{
+		case lexer.ADD:
 			p.advance()
 			rightNode := p.ParseArith()
 			opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.ADD, Right: rightNode}
+		}
+
+		if p.token.Type == lexer.ADD {
+			// p.advance()
+			// rightNode := p.ParseArith()
+			// opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.ADD, Right: rightNode}
 
 		} else if p.token.Type == lexer.SUB {
 			p.advance()
 			rightNode := p.ParseArith()
 			opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.SUB, Right: rightNode}
 
+			
 		} else {
 			return leftNode
 		}

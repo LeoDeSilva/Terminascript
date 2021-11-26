@@ -27,4 +27,4 @@ func addAndPrint(z){
 let y := x == 1 : 0 ? 1 ;
 ```
 ## Tasks
-- [ ] make it.
+- [-] make it.
