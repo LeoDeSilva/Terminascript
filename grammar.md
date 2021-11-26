@@ -6,7 +6,9 @@ expr : LET ID EQ arith | comp
      : IF (comp {AND/OR comp}) { prog }
      : FOR (ID ASSIGN INT ARROW INT) { prog }
      : FUNC ID({arith}) { prog }
-     : arith
+     : comparison
+
+comparison : arith {==,!=,>,>=,<,<=} comparison
 
 arith : term {(+/-) term}
 
@@ -54,3 +56,21 @@ if-expr : if expr then expr
 for-expr : for IDENTIFIER EQ expr to expr
          : step ?
          : prog NEXT
+
+if {
+     consequences [
+          { 
+               "condition":BinaryOpNode
+               "consequence":ProgramNode
+          },
+          { 
+               "condition":BinaryOpNode
+               "consequence":ProgramNode
+          },
+          { 
+               "condition":BinaryOpNode
+               "consequence":ProgramNode
+          },
+     ]
+     alternative ProgramNode
+}

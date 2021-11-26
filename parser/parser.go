@@ -29,6 +29,15 @@ func (p *Parser) advance() {
 	p.readPosition++
 }
 
+func Includes(array []string, element string) bool {
+	for _,e := range array {
+		if e == element{
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Parser) peekToken() lexer.Token {
 	if p.readPosition >= len(p.tokens) {
 		return lexer.Token{}
@@ -50,23 +59,79 @@ func (p *Parser) Parse() ProgramNode {
 }
 
 func (p *Parser) ParseExpr() interface{} {
-	var node interface{}
-
 	switch p.token.Type {
+	case lexer.LET:
+		return p.ParseAssignment()
+	case lexer.IF:
+		return p.ParseIf()
 	default:
-		node = p.ParseComparison()
+		 return p.ParseComparison()
 	}
-
-	return node
 }
 
-func Includes(array []string, element string) bool {
-	for _,e := range array {
-		if e == element{
-			return true
+func (p *Parser) ParseIf() interface{} {
+	p.advance()
+	conditions := p.ParseConditions()
+
+	p.advance()
+	if p.token.Type != lexer.LBRACE { return nil }
+
+	p.advance()
+	prog := ProgramNode{lexer.PROGRAM_NODE, p.ParseMultiline()}	
+
+	return IfNode{lexer.IF_NODE,conditions,prog,ProgramNode{}}
+}
+
+func (p *Parser) ParseConditions() []ConditionNode {
+	//TODO: Possibly create a better method of seperators 
+	var conditions []ConditionNode
+	var seperators = []string{lexer.AND,lexer.OR}
+
+	if p.token.Type != lexer.LPAREN { return nil }
+	p.advance()
+
+	if p.token.Type == lexer.RPAREN { return conditions }
+	conditions = append(conditions, ConditionNode{lexer.CONDITION_NODE,"AND",p.ParseComparison()})
+	
+	currentSeperator := "AND"
+	if (p.token != lexer.Token{}) {
+		for (p.token != lexer.Token{} && p.token.Type != lexer.RPAREN && p.token.Type != lexer.SEMICOLON) {
+			isSeperator := Includes(seperators,p.token.Type)
+			if !isSeperator {
+				conditions = append(conditions, ConditionNode{lexer.CONDITION_NODE,currentSeperator,p.ParseComparison()})
+			} else {
+				currentSeperator = p.token.Type
+				p.advance()
+			}
 		}
 	}
-	return false
+
+	return conditions
+}
+
+func (p *Parser) ParseMultiline() []interface{} {
+	var nodes []interface{}
+	for (p.token.Type != lexer.RBRACE) {
+		if p.token.Type != lexer.SEMICOLON {
+			expr := p.ParseExpr()
+			nodes = append(nodes,expr)
+		} else {
+			p.advance()
+		}
+	}
+	return nodes
+}
+
+func (p *Parser) ParseAssignment() interface{} {
+	p.advance()
+	if p.token.Type != lexer.IDENTIFIER { return nil }
+	identifier := p.token.Literal
+
+	p.advance()
+	if p.token.Type != lexer.EQ && p.token.Type != lexer.ASSIGN { return nil }
+
+	p.advance()
+	return AssignmentNode{lexer.ASSIGN_NODE, identifier, p.ParseComparison()}
 }
 
 func (p *Parser) ParseComparison() interface{} {
@@ -86,7 +151,7 @@ func (p *Parser) ParseComparison() interface{} {
 func (p *Parser) ParseArith() interface{} {
 	leftNode := p.ParseTerm()
 	if p.token.Type != lexer.SEMICOLON && p.token.Type != lexer.EOF {
-		var operations = []string{lexer.ADD,lexer.SUB}
+		var operations = []string{lexer.ADD,lexer.SUB,lexer.MOD}
 
 		if Includes(operations,p.token.Type){
 			op := p.token.Type
@@ -138,7 +203,7 @@ func (p *Parser) ParseFactor() interface{} {
 
 		case lexer.LPAREN:
 			p.advance()
-			expr := p.ParseArith()
+			expr := p.ParseComparison()
 			if p.token.Type == lexer.RPAREN {
 				return expr
 			}
@@ -146,6 +211,10 @@ func (p *Parser) ParseFactor() interface{} {
 		case lexer.SUB:
 			p.advance()
 			return UnaryOpNode{lexer.UNARY_NODE, lexer.SUB, p.ParseFactor()}
+		
+		case lexer.NOT:
+			p.advance()
+			return UnaryOpNode{lexer.UNARY_NODE, lexer.NOT, p.ParseFactor()}
 		}
 	}
 	return ErrorNode{}

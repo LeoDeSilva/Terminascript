@@ -5,10 +5,35 @@ type ProgramNode struct {
 	Expressions []interface{}
 }
 
+type IfNode struct {
+	Type        string
+	Condition   []ConditionNode
+	Consequence ProgramNode
+	Alternate   ProgramNode
+}
+
+type IfConditionNode struct {
+	Type        string
+	Condition   ConditionNode
+	Consequence ProgramNode
+}
+
+type ConditionNode struct {
+	Type      string
+	Seperator string
+	Condition interface{}
+}
+
 type FunctionCallNode struct {
 	Type       string
 	Identifier string
 	Parameters []interface{}
+}
+
+type AssignmentNode struct {
+	Type       string
+	Identifier string
+	Value      interface{}
 }
 
 type ParameterNode struct {

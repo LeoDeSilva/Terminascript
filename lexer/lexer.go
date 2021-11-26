@@ -69,6 +69,8 @@ func (l *Lexer) NextToken() Token {
 		tok = NewToken(SEMICOLON, l.ch)
 	case ',':
 		tok = NewToken(COMMA, l.ch)
+	case '%':
+		tok = NewToken(MOD, l.ch)
 	case ':':
 		tok = l.readDouble(COLON, '=', ASSIGN)
 	case '=':
@@ -79,6 +81,10 @@ func (l *Lexer) NextToken() Token {
 		tok = l.readDouble(LT, '=', LTE)
 	case '!':
 		tok = l.readDouble(NOT, '=', NE)
+	case '&':
+		tok = l.readDouble(ILLEGAL, '&', AND)
+	case '|':
+		tok = l.readDouble(ILLEGAL, '|', OR)
 	case '"':
 		tok.Literal = l.readString()
 		tok.Type = STRING
