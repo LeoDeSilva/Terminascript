@@ -54,26 +54,46 @@ func (p *Parser) ParseExpr() interface{} {
 
 	switch p.token.Type {
 	default:
-		node = p.ParseArith()
+		node = p.ParseComparison()
 	}
 
 	return node
 }
 
+func Includes(array []string, element string) bool {
+	for _,e := range array {
+		if e == element{
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Parser) ParseComparison() interface{} {
+	leftNode := p.ParseArith()
+	if p.token.Type != lexer.SEMICOLON && p.token.Type != lexer.EOF {
+		var operations = []string{lexer.EE,lexer.NE,lexer.GT,lexer.GTE,lexer.LT,lexer.LTE}
+
+		if Includes(operations,p.token.Type){
+			op := p.token.Type
+			p.advance()
+			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: op, Right: p.ParseComparison()}
+		}
+	}
+	return leftNode
+}
+
 func (p *Parser) ParseArith() interface{} {
 	leftNode := p.ParseTerm()
 	if p.token.Type != lexer.SEMICOLON && p.token.Type != lexer.EOF {
+		var operations = []string{lexer.ADD,lexer.SUB}
 
-		switch p.token.Type {
-		case lexer.ADD:
+		if Includes(operations,p.token.Type){
+			op := p.token.Type
 			p.advance()
-			rightNode := p.ParseArith()
-			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.ADD, Right: rightNode}
-		case lexer.SUB:
-			p.advance()
-			rightNode := p.ParseArith()
-			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.SUB, Right: rightNode}
+			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: op, Right: p.ParseArith()}
 		}
+
 	}
 	return leftNode
 }
@@ -82,24 +102,22 @@ func (p *Parser) ParseTerm() interface{} {
 	leftNode := p.ParseFactor()
 	if p.token.Type != lexer.SEMICOLON && p.token.Type != lexer.EOF {
 		p.advance()
+		var operations = []string{lexer.MUL,lexer.DIV}
 
-		switch p.token.Type {
-		case lexer.MUL:
+		if Includes(operations,p.token.Type){
+			op := p.token.Type
 			p.advance()
-			rightNode := p.ParseTerm()
-			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.MUL, Right: rightNode}
-		case lexer.DIV:
-			p.advance()
-			rightNode := p.ParseTerm()
-			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.DIV, Right: rightNode}
+			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: op, Right: p.ParseTerm()}
 		}
+
 	}
 	return leftNode
 }
 
 func (p *Parser) ParseFactor() interface{} {
 	for p.token.Type != lexer.EOF && p.token.Type != lexer.SEMICOLON {
-		if p.token.Type == lexer.IDENTIFIER {
+		switch p.token.Type{
+		case lexer.IDENTIFIER:
 			ID := p.token.Literal
 
 			if p.peekToken().Type == lexer.LPAREN {
@@ -111,31 +129,30 @@ func (p *Parser) ParseFactor() interface{} {
 				return VarAccessNode{lexer.VAR_ACCESS_NODE, ID}
 			}
 
-		} else if p.token.Type == lexer.INT {
+		case lexer.INT:
 			intValue, _ := strconv.Atoi(p.token.Literal)
 			return IntNode{lexer.INT_NODE, intValue}
 
-		} else if p.token.Type == lexer.STRING {
+		case lexer.STRING:
 			return StringNode{lexer.STRING_NODE, p.token.Literal}
 
-		} else if p.token.Type == lexer.LPAREN {
+		case lexer.LPAREN:
 			p.advance()
 			expr := p.ParseArith()
 			if p.token.Type == lexer.RPAREN {
 				return expr
 			}
 
-		} else if p.token.Type == lexer.SUB {
+		case lexer.SUB:
 			p.advance()
 			return UnaryOpNode{lexer.UNARY_NODE, lexer.SUB, p.ParseFactor()}
 		}
-
 	}
 	return ErrorNode{}
 }
 
 func (p *Parser) ParseParameters() []interface{} {
-	parameters := make([]interface{}, 0)
+	parameters := make([]interface{}, 1)
 	p.advance()
 
 	if p.token.Type == lexer.RPAREN {
