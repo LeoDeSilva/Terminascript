@@ -63,30 +63,17 @@ func (p *Parser) ParseExpr() interface{} {
 func (p *Parser) ParseArith() interface{} {
 	leftNode := p.ParseTerm()
 	if p.token.Type != lexer.SEMICOLON && p.token.Type != lexer.EOF {
-		var opNode BinaryOperationNode
-		switch p.token.Type{
+
+		switch p.token.Type {
 		case lexer.ADD:
 			p.advance()
 			rightNode := p.ParseArith()
-			opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.ADD, Right: rightNode}
-		}
-
-		if p.token.Type == lexer.ADD {
-			// p.advance()
-			// rightNode := p.ParseArith()
-			// opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.ADD, Right: rightNode}
-
-		} else if p.token.Type == lexer.SUB {
+			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.ADD, Right: rightNode}
+		case lexer.SUB:
 			p.advance()
 			rightNode := p.ParseArith()
-			opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.SUB, Right: rightNode}
-
-			
-		} else {
-			return leftNode
+			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.SUB, Right: rightNode}
 		}
-
-		return opNode
 	}
 	return leftNode
 }
@@ -94,23 +81,18 @@ func (p *Parser) ParseArith() interface{} {
 func (p *Parser) ParseTerm() interface{} {
 	leftNode := p.ParseFactor()
 	if p.token.Type != lexer.SEMICOLON && p.token.Type != lexer.EOF {
-		var opNode BinaryOperationNode
 		p.advance()
 
-		if p.token.Type == lexer.MUL {
+		switch p.token.Type {
+		case lexer.MUL:
 			p.advance()
 			rightNode := p.ParseTerm()
-			opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.MUL, Right: rightNode}
-
-		} else if p.token.Type == lexer.DIV {
+			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.MUL, Right: rightNode}
+		case lexer.DIV:
 			p.advance()
 			rightNode := p.ParseTerm()
-			opNode = BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.DIV, Right: rightNode}
-
-		} else {
-			return leftNode
+			return BinaryOperationNode{Type: lexer.BIN_OP_NODE, Left: leftNode, Op: lexer.DIV, Right: rightNode}
 		}
-		return opNode
 	}
 	return leftNode
 }
