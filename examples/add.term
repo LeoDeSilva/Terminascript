@@ -13,3 +13,11 @@ while (i < 10) {
 for (i := 0 -> 10) {
     print(i);
 }
+
+func countToTen() {
+    for (i := 0 -> 10 ) {
+        print(i);
+    }
+}
+
+countToTen();

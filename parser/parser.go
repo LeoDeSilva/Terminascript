@@ -65,12 +65,16 @@ func (p *Parser) ParseExpr() interface{} {
 	case lexer.LET:
 		p.advance()
 		return p.ParseAssignment()
+	case lexer.RETURN:
+		return p.ParseReturn()
 	case lexer.IF:
 		return p.ParseIf()
 	case lexer.WHILE:
 		return p.ParseWhile()
 	case lexer.FOR:
 		return p.ParseFor()
+	case lexer.FUNC:
+		return p.ParseFunction()
 	default:
 		if p.token.Type == lexer.IDENTIFIER {
 			if p.peekToken().Type == lexer.EQ || p.peekToken().Type == lexer.ASSIGN {
@@ -79,6 +83,27 @@ func (p *Parser) ParseExpr() interface{} {
 		}
 		return p.ParseComparison()
 	}
+}
+
+func (p *Parser) ParseReturn() interface{} {
+	p.advance()
+	return ReturnNode{lexer.RETURN, p.ParseComparison()}
+}
+
+func (p *Parser) ParseFunction() interface{} {
+	p.advance()
+	
+	if p.token.Type != lexer.IDENTIFIER { return nil }
+	identifier := p.token.Literal
+	p.advance()
+
+	if p.token.Type != lexer.LPAREN { return nil }
+	parameters := p.ParseParameters()
+	p.advance()
+
+	if p.token.Type != lexer.LBRACE { return nil }
+	p.advance()
+	return FunctionDefenitionNode{lexer.FUNCTION_DEFENITION_NODE,identifier,parameters,ProgramNode{lexer.PROGRAM_NODE,p.ParseMultiline()}}
 }
 
 func (p *Parser) ParseFor() interface{} {
@@ -171,6 +196,7 @@ func (p *Parser) ParseMultiline() []interface{} {
 	for (p.token.Type != lexer.RBRACE) {
 		if p.token.Type != lexer.SEMICOLON {
 			expr := p.ParseExpr()
+			p.advance()
 			nodes = append(nodes,expr)
 		} else {
 			p.advance()

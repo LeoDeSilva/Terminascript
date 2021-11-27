@@ -5,6 +5,18 @@ type ProgramNode struct {
 	Expressions []interface{}
 }
 
+type ReturnNode struct {
+	Type       string
+	Expression interface{}
+}
+
+type FunctionDefenitionNode struct {
+	Type        string
+	Identifier  string
+	Parameters  []interface{}
+	Consequence ProgramNode
+}
+
 type ForNode struct {
 	Type        string
 	Identifier  string
