@@ -5,6 +5,20 @@ type ProgramNode struct {
 	Expressions []interface{}
 }
 
+type ForNode struct {
+	Type        string
+	Identifier  string
+	MinValue    int
+	MaxValue    int
+	Consequence ProgramNode
+}
+
+type WhileNode struct {
+	Type        string
+	Condition   []ConditionNode
+	Consequence ProgramNode
+}
+
 type IfNode struct {
 	Type        string
 	Condition   []ConditionNode

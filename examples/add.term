@@ -1,1 +1,15 @@
-x + 10
+let x := 10;
+let y := 5;
+let z = 10;
+
+z = x + y;
+
+let i := 0;
+while (i < 10) {
+    print(i);
+    i = i + 1;
+}
+
+for (i := 0 -> 10) {
+    print(i);
+}

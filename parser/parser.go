@@ -5,6 +5,8 @@ import (
 	"terminascript/lexer"
 )
 
+// TODO : if ... elif ... else statements
+
 type Parser struct {
 	tokens       []lexer.Token
 	position     int
@@ -61,12 +63,68 @@ func (p *Parser) Parse() ProgramNode {
 func (p *Parser) ParseExpr() interface{} {
 	switch p.token.Type {
 	case lexer.LET:
+		p.advance()
 		return p.ParseAssignment()
 	case lexer.IF:
 		return p.ParseIf()
+	case lexer.WHILE:
+		return p.ParseWhile()
+	case lexer.FOR:
+		return p.ParseFor()
 	default:
-		 return p.ParseComparison()
+		if p.token.Type == lexer.IDENTIFIER {
+			if p.peekToken().Type == lexer.EQ || p.peekToken().Type == lexer.ASSIGN {
+				return p.ParseAssignment()
+			}
+		}
+		return p.ParseComparison()
 	}
+}
+
+func (p *Parser) ParseFor() interface{} {
+	p.advance()
+
+	if p.token.Type != lexer.LPAREN { return nil }
+	p.advance()
+
+	if p.token.Type != lexer.IDENTIFIER { return nil }
+	identifier := p.token.Literal
+	p.advance()
+
+	if p.token.Type != lexer.ASSIGN && p.token.Type != lexer.EQ { return nil }
+	p.advance()
+
+	if p.token.Type != lexer.INT { return nil }
+	min,_ := strconv.Atoi(p.token.Literal)
+	p.advance()
+
+	if p.token.Type != lexer.ARROW { return nil }
+	p.advance()
+
+	if p.token.Type != lexer.INT { return nil }
+	max,_ := strconv.Atoi(p.token.Literal)
+	p.advance()
+
+	if p.token.Type != lexer.RPAREN { return nil }
+	p.advance()
+
+	if p.token.Type != lexer.LBRACE { return nil }
+	p.advance()
+
+	return ForNode{lexer.FOR_NODE, identifier, min, max,ProgramNode{lexer.PROGRAM_NODE,p.ParseMultiline()}}
+}
+
+func (p *Parser) ParseWhile() interface{} {
+	p.advance()
+	conditions := p.ParseConditions()
+
+	p.advance()
+	if p.token.Type != lexer.LBRACE { return nil }
+
+	p.advance()
+	consequence := ProgramNode{lexer.PROGRAM_NODE, p.ParseMultiline()}	
+
+	return WhileNode{lexer.WHILE_NODE, conditions, consequence}
 }
 
 func (p *Parser) ParseIf() interface{} {
@@ -83,7 +141,6 @@ func (p *Parser) ParseIf() interface{} {
 }
 
 func (p *Parser) ParseConditions() []ConditionNode {
-	//TODO: Possibly create a better method of seperators 
 	var conditions []ConditionNode
 	var seperators = []string{lexer.AND,lexer.OR}
 
@@ -123,7 +180,6 @@ func (p *Parser) ParseMultiline() []interface{} {
 }
 
 func (p *Parser) ParseAssignment() interface{} {
-	p.advance()
 	if p.token.Type != lexer.IDENTIFIER { return nil }
 	identifier := p.token.Literal
 
@@ -221,7 +277,7 @@ func (p *Parser) ParseFactor() interface{} {
 }
 
 func (p *Parser) ParseParameters() []interface{} {
-	parameters := make([]interface{}, 1)
+	parameters := make([]interface{}, 0)
 	p.advance()
 
 	if p.token.Type == lexer.RPAREN {
