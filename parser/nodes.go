@@ -20,8 +20,8 @@ type FunctionDefenitionNode struct {
 type ForNode struct {
 	Type        string
 	Identifier  string
-	MinValue    int
-	MaxValue    int
+	MinValue    interface{}
+	MaxValue    interface{}
 	Consequence ProgramNode
 }
 

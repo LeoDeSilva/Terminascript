@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strconv"
 	"terminascript/lexer"
 )
@@ -12,6 +13,11 @@ type Parser struct {
 	position     int
 	readPosition int
 	token        lexer.Token
+}
+
+func ReturnError(errorString string) ErrorNode{
+	fmt.Println(errorString)
+	return ErrorNode{lexer.ERROR_NODE}
 }
 
 func NewParser(tokens []lexer.Token) *Parser {
@@ -85,85 +91,6 @@ func (p *Parser) ParseExpr() interface{} {
 	}
 }
 
-func (p *Parser) ParseReturn() interface{} {
-	p.advance()
-	return ReturnNode{lexer.RETURN, p.ParseComparison()}
-}
-
-func (p *Parser) ParseFunction() interface{} {
-	p.advance()
-	
-	if p.token.Type != lexer.IDENTIFIER { return nil }
-	identifier := p.token.Literal
-	p.advance()
-
-	if p.token.Type != lexer.LPAREN { return nil }
-	parameters := p.ParseParameters()
-	p.advance()
-
-	if p.token.Type != lexer.LBRACE { return nil }
-	p.advance()
-	return FunctionDefenitionNode{lexer.FUNCTION_DEFENITION_NODE,identifier,parameters,ProgramNode{lexer.PROGRAM_NODE,p.ParseMultiline()}}
-}
-
-func (p *Parser) ParseFor() interface{} {
-	p.advance()
-
-	if p.token.Type != lexer.LPAREN { return nil }
-	p.advance()
-
-	if p.token.Type != lexer.IDENTIFIER { return nil }
-	identifier := p.token.Literal
-	p.advance()
-
-	if p.token.Type != lexer.ASSIGN && p.token.Type != lexer.EQ { return nil }
-	p.advance()
-
-	if p.token.Type != lexer.INT { return nil }
-	min,_ := strconv.Atoi(p.token.Literal)
-	p.advance()
-
-	if p.token.Type != lexer.ARROW { return nil }
-	p.advance()
-
-	if p.token.Type != lexer.INT { return nil }
-	max,_ := strconv.Atoi(p.token.Literal)
-	p.advance()
-
-	if p.token.Type != lexer.RPAREN { return nil }
-	p.advance()
-
-	if p.token.Type != lexer.LBRACE { return nil }
-	p.advance()
-
-	return ForNode{lexer.FOR_NODE, identifier, min, max,ProgramNode{lexer.PROGRAM_NODE,p.ParseMultiline()}}
-}
-
-func (p *Parser) ParseWhile() interface{} {
-	p.advance()
-	conditions := p.ParseConditions()
-
-	p.advance()
-	if p.token.Type != lexer.LBRACE { return nil }
-
-	p.advance()
-	consequence := ProgramNode{lexer.PROGRAM_NODE, p.ParseMultiline()}	
-
-	return WhileNode{lexer.WHILE_NODE, conditions, consequence}
-}
-
-func (p *Parser) ParseIf() interface{} {
-	p.advance()
-	conditions := p.ParseConditions()
-
-	p.advance()
-	if p.token.Type != lexer.LBRACE { return nil }
-
-	p.advance()
-	prog := ProgramNode{lexer.PROGRAM_NODE, p.ParseMultiline()}	
-
-	return IfNode{lexer.IF_NODE,conditions,prog,ProgramNode{}}
-}
 
 func (p *Parser) ParseConditions() []ConditionNode {
 	var conditions []ConditionNode
@@ -210,7 +137,12 @@ func (p *Parser) ParseAssignment() interface{} {
 	identifier := p.token.Literal
 
 	p.advance()
-	if p.token.Type != lexer.EQ && p.token.Type != lexer.ASSIGN { return nil }
+	if p.token.Type != lexer.EQ && p.token.Type != lexer.ASSIGN {
+		if p.token.Type == lexer.SEMICOLON {
+			return AssignmentNode{lexer.ASSIGN_NODE, identifier, IntNode{lexer.INT_NODE,0}}
+		}
+		return ReturnError("Expected ASSIGNMENT or EQ Variable Assignment")
+	}
 
 	p.advance()
 	return AssignmentNode{lexer.ASSIGN_NODE, identifier, p.ParseComparison()}
@@ -318,4 +250,80 @@ func (p *Parser) ParseParameters() []interface{} {
 		}
 	}
 	return parameters
+}
+
+func (p *Parser) ParseReturn() interface{} {
+	p.advance()
+	return ReturnNode{lexer.RETURN, p.ParseComparison()}
+}
+
+func (p *Parser) ParseFunction() interface{} {
+	p.advance()
+	
+	if p.token.Type != lexer.IDENTIFIER { return ReturnError("Expected Identifier Function Defenition")}
+	identifier := p.token.Literal
+	p.advance()
+
+	if p.token.Type != lexer.LPAREN { return ReturnError("Expected LPAREN Function Defenition")}
+	parameters := p.ParseParameters()
+	p.advance()
+
+	if p.token.Type != lexer.LBRACE { return ReturnError("Expected RBRACE Function Defenition") }
+	p.advance()
+	return FunctionDefenitionNode{lexer.FUNCTION_DEFENITION_NODE,identifier,parameters,ProgramNode{lexer.PROGRAM_NODE,p.ParseMultiline()}}
+}
+
+func (p *Parser) ParseFor() interface{} {
+	p.advance()
+
+	if p.token.Type != lexer.LPAREN { return ReturnError("Expected LPAREN For Statement") }
+	p.advance()
+
+	if p.token.Type != lexer.IDENTIFIER { return ReturnError("Expected IDENTIFIER For Statement") }
+	identifier := p.token.Literal
+	p.advance()
+
+	if p.token.Type != lexer.ASSIGN && p.token.Type != lexer.EQ { return ReturnError("Expected ASSIGN or EQ For Statement") }
+	p.advance()
+
+	min := p.ParseExpr()
+
+	if p.token.Type != lexer.ARROW { return ReturnError("Expected ARROW For Statement") }
+	p.advance()
+
+	max := p.ParseExpr()
+
+	if p.token.Type != lexer.RPAREN { return ReturnError("Expected LPAREN For Statement") }
+	p.advance()
+
+	if p.token.Type != lexer.LBRACE { return ReturnError("Expected LBRACE For Statement") }
+	p.advance()
+
+	return ForNode{lexer.FOR_NODE, identifier, min, max,ProgramNode{lexer.PROGRAM_NODE,p.ParseMultiline()}}
+}
+
+func (p *Parser) ParseWhile() interface{} {
+	p.advance()
+	conditions := p.ParseConditions()
+
+	p.advance()
+	if p.token.Type != lexer.LBRACE { return ReturnError("Expected LBRACE While Statement") }
+
+	p.advance()
+	consequence := ProgramNode{lexer.PROGRAM_NODE, p.ParseMultiline()}	
+
+	return WhileNode{lexer.WHILE_NODE, conditions, consequence}
+}
+
+func (p *Parser) ParseIf() interface{} {
+	p.advance()
+	conditions := p.ParseConditions()
+
+	p.advance()
+	if p.token.Type != lexer.LBRACE { return ReturnError("Expected LBRACE If Statement") }
+
+	p.advance()
+	prog := ProgramNode{lexer.PROGRAM_NODE, p.ParseMultiline()}	
+
+	return IfNode{lexer.IF_NODE,conditions,prog,ProgramNode{}}
 }
