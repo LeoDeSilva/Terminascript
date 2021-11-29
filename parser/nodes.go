@@ -81,8 +81,8 @@ type UnaryOpNode struct {
 }
 
 type VarAccessNode struct {
-	Type  string
-	Value string
+	Type       string
+	Identifier string
 }
 
 type IntNode struct {

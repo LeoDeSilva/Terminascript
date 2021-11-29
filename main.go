@@ -20,6 +20,7 @@ func ReadFile(filename string) string {
 
 func startRepl(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+	e := evaluator.NewEnvironment()
 
 	for {
 		fmt.Fprintf(out, ">>")
@@ -30,11 +31,11 @@ func startRepl(in io.Reader, out io.Writer) {
 		}
 
 		line := scanner.Text()
-		interpretProgram(line)
+		interpretProgram(line,e)
 	}
 }
 
-func interpretProgram(program string) {
+func interpretProgram(program string, e *evaluator.Environment) {
 	l := lexer.NewLexer(strings.TrimSpace(program))
 	tokens := l.Lex()
 
@@ -42,7 +43,7 @@ func interpretProgram(program string) {
 	ast := p.Parse()
 
 	fmt.Println(ast)
-	evaluator.Eval(ast)
+	evaluator.Eval(ast, e)
 }
 
 func main() {
@@ -50,7 +51,8 @@ func main() {
 		filename := os.Args[1]
 		file := ReadFile(filename)
 		formattedFile := strings.Replace(file, `\n`, ``, -1)
-		interpretProgram(formattedFile)
+		e := evaluator.NewEnvironment()
+		interpretProgram(formattedFile, e)
 	} else {
 		startRepl(os.Stdin, os.Stdout)
 	}
