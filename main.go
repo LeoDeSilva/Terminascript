@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"terminascript/evaluator"
 	"terminascript/lexer"
 	"terminascript/parser"
 )
@@ -34,13 +35,14 @@ func startRepl(in io.Reader, out io.Writer) {
 }
 
 func interpretProgram(program string) {
-	fmt.Println(program)
 	l := lexer.NewLexer(strings.TrimSpace(program))
 	tokens := l.Lex()
 
 	p := parser.NewParser(tokens)
 	ast := p.Parse()
+
 	fmt.Println(ast)
+	evaluator.Eval(ast)
 }
 
 func main() {
