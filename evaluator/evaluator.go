@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"strconv"
 	"terminascript/lexer"
 	"terminascript/parser"
 )
@@ -35,8 +36,11 @@ func Eval(node interface{}, e *Environment) interface{} {
 	case parser.ForNode:
 		return parseForNode(n, e)
 	case parser.VarAccessNode:
-		fmt.Println(e.Variables[n.Identifier])
 		return e.Variables[n.Identifier]
+	case parser.FunctionCallNode:
+		return parseFunctionCallNode(n, e)
+	case parser.FunctionDefenitionNode:
+		return parseFunctionDefenitionNode(n, e)
 	case parser.IntNode:
 		return n.Value
 	case parser.StringNode:
@@ -206,4 +210,45 @@ func isReturn(node interface{}) bool {
 		return true
 	}
 	return false
+}
+
+func contained(list []string, element string) bool {
+	for _, e := range list {
+		if e == element {
+			return true
+		}
+	}
+	return false
+}
+
+func parseFunctionCallNode(n parser.FunctionCallNode, e *Environment) interface{} {
+	var FUNCTIONS = []string{
+		"print",
+	}
+	if contained(FUNCTIONS, n.Identifier) {
+		switch n.Identifier {
+		case "print":
+			handlePrint(n, e)
+		}
+	}
+	return -1
+}
+
+func parseFunctionDefenitionNode(n parser.FunctionDefenitionNode, e *Environment) interface{} {
+	return nil
+}
+
+func handlePrint(n parser.FunctionCallNode, e *Environment) string {
+	str := ""
+	for _, param := range n.Parameters {
+		result := Eval(param, e)
+		switch res := result.(type) {
+		case int:
+			str += strconv.Itoa(res)
+		case string:
+			str += res
+		}
+	}
+	fmt.Println(str)
+	return str
 }

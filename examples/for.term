@@ -1,12 +1,9 @@
 let i = 10;
 if (i==10) {
     for (j := 0 -> 5) {
+        print(j);
         if (j == 3) {
             return;
         }
     }
-    i;
-    i;
 }
-
-i;
