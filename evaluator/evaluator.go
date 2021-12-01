@@ -234,7 +234,12 @@ func handleCustomFunction(n parser.FunctionCallNode, e *Environment) interface{}
 			localScope.Variables[parameter.(parser.VarAccessNode).Identifier] = Eval(n.Parameters[i], e)
 		}
 
-		return Eval(function.Consequence, localScope)
+		returned := Eval(function.Consequence, localScope)
+		if isReturn(returned) {
+			return Eval(returned.(parser.ReturnNode).Expression, e)
+		} else {
+			return returned
+		}
 	}
 	return -1
 }
