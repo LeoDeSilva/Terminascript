@@ -1,7 +1,9 @@
 package evaluator
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strconv"
 	"terminascript/lexer"
 	"terminascript/parser"
@@ -61,7 +63,6 @@ func parseProgramNode(n parser.ProgramNode, e *Environment) interface{} {
 }
 
 func parseForNode(n parser.ForNode, e *Environment) interface{} {
-	// TODO: FIX IT COZ U STUPID, CREATE IDENTIFIER FOR RETURN NODE
 	for i := Eval(n.MinValue, e).(int); i < Eval(n.MaxValue, e).(int); i++ {
 		var returned interface{}
 		e.Variables[n.Identifier] = i
@@ -70,8 +71,7 @@ func parseForNode(n parser.ForNode, e *Environment) interface{} {
 
 			if isReturn(returned) {
 				return returned
-			}
-			if isReturn(node) {
+			} else if isReturn(node) {
 				return node
 			}
 		}
@@ -87,8 +87,7 @@ func parseWhileNode(n parser.WhileNode, e *Environment) interface{} {
 
 			if isReturn(returned) {
 				return returned
-			}
-			if isReturn(node) {
+			} else if isReturn(node) {
 				return node
 			}
 		}
@@ -114,8 +113,7 @@ func parseIfNode(n parser.IfNode, e *Environment) interface{} {
 
 			if isReturn(returned) {
 				return returned
-			}
-			if isReturn(node) {
+			} else if isReturn(node) {
 				return node
 			}
 		}
@@ -139,8 +137,9 @@ func parseConditions(conditions []parser.ConditionNode, e *Environment) bool {
 }
 
 func parseAssignNode(n parser.AssignmentNode, e *Environment) interface{} {
-	e.Variables[n.Identifier] = Eval(n.Value, e)
-	return Eval(n.Value, e)
+	value := Eval(n.Value, e)
+	e.Variables[n.Identifier] = value
+	return value
 }
 
 func parseUnaryOpNode(n parser.UnaryOpNode, e *Environment) int {
@@ -212,35 +211,58 @@ func isReturn(node interface{}) bool {
 	return false
 }
 
-func contained(list []string, element string) bool {
-	for _, e := range list {
-		if e == element {
-			return true
-		}
-	}
-	return false
+func parseFunctionDefenitionNode(n parser.FunctionDefenitionNode, e *Environment) interface{} {
+	e.Functions[n.Identifier] = n
+	return n.Identifier
 }
 
 func parseFunctionCallNode(n parser.FunctionCallNode, e *Environment) interface{} {
-	var FUNCTIONS = []string{
-		"print",
+	switch n.Identifier {
+	case "print":
+		return handlePrint(n, e)
+	case "input":
+		return handleInput(n, e)
+	default:
+		return handleCustomFunction(n, e)
 	}
-	if contained(FUNCTIONS, n.Identifier) {
-		switch n.Identifier {
-		case "print":
-			handlePrint(n, e)
+}
+
+func handleCustomFunction(n parser.FunctionCallNode, e *Environment) interface{} {
+	if function, ok := e.Functions[n.Identifier]; ok {
+		localScope := &Environment{make(map[string]interface{}), make(map[string]parser.FunctionDefenitionNode)}
+		for i, parameter := range function.Parameters {
+			localScope.Variables[parameter.(parser.VarAccessNode).Identifier] = Eval(n.Parameters[i], e)
 		}
+
+		return Eval(function.Consequence, localScope)
 	}
 	return -1
 }
 
-func parseFunctionDefenitionNode(n parser.FunctionDefenitionNode, e *Environment) interface{} {
-	return nil
+func handleInput(n parser.FunctionCallNode, e *Environment) string {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Fprintf(os.Stdout, paramsToString(n, e))
+	scanned := scanner.Scan()
+
+	if !scanned {
+		return ""
+	}
+
+	return scanner.Text()
 }
 
 func handlePrint(n parser.FunctionCallNode, e *Environment) string {
+	str := paramsToString(n, e)
+	fmt.Println(str)
+	return str
+}
+
+func paramsToString(n parser.FunctionCallNode, e *Environment) string {
 	str := ""
-	for _, param := range n.Parameters {
+	for i, param := range n.Parameters {
+		if i != 0 {
+			str += " "
+		}
 		result := Eval(param, e)
 		switch res := result.(type) {
 		case int:
@@ -249,6 +271,5 @@ func handlePrint(n parser.FunctionCallNode, e *Environment) string {
 			str += res
 		}
 	}
-	fmt.Println(str)
 	return str
 }

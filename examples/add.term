@@ -3,21 +3,26 @@ let y := 5;
 let z = 10;
 
 z = x + y;
+print("Z is",z);
 
 let i := 0;
-while (i < 10) {
+while (i < 5) {
     print(i);
     i = i + 1;
 }
 
+print("Finished While Loop");
+
 for (i := 0 -> 10) {
     print(i);
 }
+print("Finished For Loop");
 
 func countToTen() {
     for (i := 0 -> 10 ) {
         print(i);
     }
+    print("Finished Function Loop");
 }
 
 countToTen();

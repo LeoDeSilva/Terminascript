@@ -1,9 +1,20 @@
-let i = 10;
-if (i==10) {
-    for (j := 0 -> 5) {
-        print(j);
-        if (j == 3) {
-            return;
+func loopUntilThree(){
+    let i = 10;
+    if (i==10) {
+        for (j := 0 -> 5) {
+            if (j == 3) {
+                print("Equals 3");
+                return;
+            }
+            print(j);
         }
     }
 }
+
+func loopUntilN(n){
+    for (i := 0 -> n) {
+        print(i);
+    }
+}
+
+loopUntilN(20)

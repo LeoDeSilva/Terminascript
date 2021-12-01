@@ -31,7 +31,7 @@ func startRepl(in io.Reader, out io.Writer) {
 		}
 
 		line := scanner.Text()
-		interpretProgram(line,e)
+		interpretProgram(line, e)
 	}
 }
 
@@ -42,7 +42,6 @@ func interpretProgram(program string, e *evaluator.Environment) {
 	p := parser.NewParser(tokens)
 	ast := p.Parse()
 
-	fmt.Println(ast)
 	evaluator.Eval(ast, e)
 }
 
